@@ -1,0 +1,22 @@
+Os peers devem se registrar no servidor para poderem realizar a troca de
+arquivos entre peers. Isso deve ser feito por meio de uma REST.
+
+server.ts : armazena uma estrutura de clientes cadastrados e os arquivos que fornecem.
+
+Durante o registro, cada peer informa seus recursos disponíveis (utilize
+um diretório com alguns arquivos, e calcule a hash de cada um). Para cada
+arquivo, o peer fornece ao servidor uma string ou o nome do arquivo e
+sua hash (utilize funções como MD5 ou SHA256, calculada sobre o
+conteúdo de cada arquivo).
+
+client.ts : informa os recursos disponíveis (informa o diretório + alguns arquivos)
+    - Calcular o hash de cada arquivo.
+    - O peer (client.ts) fornece ao servidor (server.ts) o nome do arquivo + hash (MD5 ou SHA256).
+    - O servidor (server.ts) armazena numa estrutura o IP do peer (client.ts) e vincula o recurso + hash ao IP de quem o possui.
+    - Os peers (client.ts) podem solicitar uma lista de recursos (nomes dos arquivos/string de identificacao,
+        IP dos peers que contém os recursos e hashes) ao servidor ou um recurso específico. Isso deve ser feito através de uma REST.
+    - Ao solicitar um recurso ao servidor, o peer recebe a informação sobre sua localização e deve realizar a comunicação com o outro peer
+        através de sockets.
+    - O servidor (server.ts) deve manter uma estrutura da rede de overlay. Para tanto, os peers (client.ts) devem consumir uma REST
+        do servidor a cada 5 segundos. Caso um peer (client.ts) não faça DUAS comunicações seguidas com o servidor, ele é removido.
+        
