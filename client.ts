@@ -1,40 +1,46 @@
-import express from "express";
-import socketio from "socket.io";
-import path from "path";
-const readline = require("readline");
+import readLine from 'readline';
+import { Worker } from 'worker_threads';
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
+const worker = new Worker('./ping.js');
+
+const server = require('http').createServer();
+const io = require('socket.io')(server);
+
+let input = readLine.createInterface({
+  input: process.stdin,
+  output: process.stdout
 });
 
-const app = express();
-app.set("port", process.env.PORT || 4000);
+const port = process.argv[2];
+const host = process.argv[1];
 
-let http = require("http").Server(app);
-// set up socket.io and bind it to our
-// http server.
-let io = require("socket.io")(http);
-
-app.get("/", (req: any, res: any) => {
-  res.sendFile(path.resolve("./client/index.html"));
+io.on('connection', client => {
+  client.on('event', data => { console.log(`Oi boi!`, data) });
+  client.on('disconnect', () => {console.log('Oi toy!') });
 });
 
-// whenever a user connects on port 3000 via
-// a websocket, log that a user has connected
-io.on("connection", function(socket: any) {
-  console.log("a user connected");
-});
+server.listen(port, host);
 
-const server = http.listen(4000, function() {
-  console.log("listening on *:4000");
-});
+var recursiveReadLine = function() {
+  input.question('Command: ', function (answer) {
+    if (answer == 'exit')
+      return input.close();
+    console.log('Encerrando a aplicação!');
 
-rl.question('type your command: ', function(name : String) {
-    console.log('command was: ', name);
-})
+    if (answer == 'register') 
+    console.log('Registrando seus arquivos...');
+    
 
-rl.on('close', function() {
-    console.log('bye!');
-    process.exit(0);
-})
+    if (answer == 'resources') 
+    console.log('Listando todos os seus recursos...');
+    
+
+    if (answer == 'get') 
+    console.log('Você precisa se conectar no IP 192.168.100.1 para obter o recurso X');
+    
+
+    recursiveReadLine();
+  });
+};
+
+recursiveReadLine();
