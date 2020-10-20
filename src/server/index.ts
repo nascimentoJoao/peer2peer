@@ -2,14 +2,39 @@ import 'dotenv/config';
 import express from 'express';
 import { PeerController } from './controllers/PeerController';
 import { Worker } from 'worker_threads';
-import { Peer } from './models/Peer';
+import { Peer } from './interfaces/Peer';
 import { PeerEvents } from './enums/PeerEvents.enum';
 
 export class App {
 
   server : express.Application;
   private worker : Worker;
-  private peerList : Peer[];
+  private peerList : Peer[] = [
+    {
+      ipAddress: "127.0.0.1:9032",
+      lastPing: new Date(),
+      resources: [
+        {
+          name: "Mortau Combati",
+          hash: "ADWASDBAWD23123o3912lf231"
+        }
+      ]
+    },
+    {
+      ipAddress: "192.168.1.1:4001",
+      lastPing: new Date(),
+      resources: [
+        {
+          name: "GTA Rio de Janeiro",
+          hash: "dw9923kjglskdnflje23"
+        },
+        {
+          name: "Kid_Bengala_007",
+          hash: "a12345678"
+        }
+      ]
+    }
+  ];
   private static instance : App;
 
   static getInstance() : App {
