@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { App } from '..';
-import { Resources } from '../interfaces/Resources';
-import { HttpResponse } from '../interfaces/Response';
+import { Resource } from '../interfaces/Resource';
+import { HttpResponse } from '../interfaces/HttpResponse';
 import { Peer } from '../interfaces/Peer';
+import { PeerResourceSanitized } from '../interfaces/PeerResourceSanitized';
 
 const router : Router = Router();
 
@@ -13,20 +14,37 @@ const router : Router = Router();
  * @returns A JSON object, containing a list of 
  */
 router.get('/', (request: Request, response: Response) => {
-  const hostIp = request.query.hostIp;
-  const resourceId = request.query.resourceId;
-  const resourceName = request.query.resourceName
+  const address = request.query.address;
+  const hash = request.query.hash;
+  const name = request.query.name
 
-  let peersAndResources = App.getInstance().peers;
+  let peers = [...App.getInstance().peers];
+  
+  let resp = peers.map((peer : Peer) => {
+    return {
+      peerAddress: peer.ipAddress,
+      resources: peer.resources
+    }
+  });
 
-  if (hostIp || resourceId || resourceName) {
-    peersAndResources = App.getInstance().peers.filter((peer : Peer) => {
-      return peer.ipAddress === hostIp || peer.resources.find((res : Resources) => res.hash === resourceId) || peer.resources.find((res : Resources) => res.name === resourceName); 
+  if (address) {
+    resp = resp.filter((item : PeerResourceSanitized) => item.peerAddress === address);
+  }
+
+  if (hash) {
+    resp.forEach((item : PeerResourceSanitized) => {
+      item.resources = item.resources.filter((res : Resource) => res.hash === hash);
+    });
+  }
+
+  if (name) {
+    resp.forEach((item : PeerResourceSanitized) => {
+      item.resources = item.resources.filter((res : Resource) => res.name === name);
     });
   }
   
-  peersAndResources.length
-    ? response.send(<HttpResponse>{code: 200, body: JSON.stringify(peersAndResources)})
+  resp.length
+    ? response.send(<HttpResponse>{code: 200, body: JSON.parse(JSON.stringify(resp))})
     : response.send(<HttpResponse>{code: 404, error: 'O recurso buscado não existe.'});
   
 });

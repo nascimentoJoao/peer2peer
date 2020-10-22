@@ -1,4 +1,4 @@
-export interface Resources {
+export interface Resource {
   name: string;
   hash: string;
 }

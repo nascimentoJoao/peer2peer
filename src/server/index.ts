@@ -9,7 +9,7 @@ export class App {
 
   server : express.Application;
   private worker : Worker;
-  private peerList : Peer[] = [
+  private static peerList : Peer[] = [
     {
       ipAddress: "127.0.0.1:9032",
       lastPing: new Date(),
@@ -53,11 +53,11 @@ export class App {
   }
 
   get peers() : Peer[] {
-    return this.peerList; 
+    return App.peerList; 
   }
 
   set peers(newPeers : Peer[]) {
-    this.peerList = newPeers;
+    App.peerList = newPeers;
   }
 
   private registerMiddlewares() {
