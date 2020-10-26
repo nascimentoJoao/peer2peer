@@ -1,8 +1,8 @@
 import readLine from 'readline';
 const { exec } = require("child_process");
-import { createSocket, Socket } from 'dgram';
+import { createSocket } from 'dgram';
 import { Resource } from '../server/interfaces/Resource';
-import { spawn, Thread, Worker } from "threads";
+import { spawn, Worker } from "threads";
 
 const server = createSocket('udp4');
 const host = process.argv[2];
@@ -33,26 +33,25 @@ const generateResourcesAndHashes = () => {
     files.forEach(function (file) {
       exec(`md5sum build/src/client/${folder}/${file}`, (error, stdout, stderr) => {
         if (error) {
-            console.log(`error: ${error.message}`);
+          console.log(`error: ${error.message}`);
         }
 
         if (stderr) {
-            console.log(`error: ${stderr.message}`);
+          console.log(`error: ${stderr.message}`);
         }
 
         if (stdout) {
-            const md5Results = stdout.split(' ');
-            availableResources.push({ name: file, hash: md5Results[0] });
+          const md5Results = stdout.split(' ');
+          availableResources.push({ name: file, hash: md5Results[0] });
         }
-    })
+      })
     });
   });
 }
 
 const startHeartbeat = async () => {
-  const algo = await spawn(new Worker("./workers/sendHeartbeat"));
-  console.log('bisnaga: ', algo);
-  await algo();
+  const heartbeatFunction = await spawn(new Worker("./workers/sendHeartbeat"));
+  await heartbeatFunction(`${host}:${port}`);
 }
 
 let input = readLine.createInterface({
@@ -65,29 +64,62 @@ server.on('message', (messageContent, rinfo) => {
   const message = messageContent.toString();
   const parsedMessage = JSON.parse(message);
 
+
+  if(parsedMessage.action == 'i_got_it') {
+    //console.log('CONTEUDO TEXTO: ', parsedMessage.value);
+    const contentOfFile = parsedMessage.value;
+
+    fs.writeFile(`build/src/client/${folder}/received`, contentOfFile, (error) => {
+        if(error) {
+          console.log('Error happened! ', error);
+          return error;
+        }
+
+        console.log('File received with success!');
+    })
+
+  }
+
   let haveFile = false;
 
-  console.log('parseado: ', parsedMessage);
-
-  if(parsedMessage.action == 'i_want') {
+  if (parsedMessage.action == 'i_want_it') {
     console.log(`O usuário em: ${rinfo.address}:${rinfo.port} quer o arquivo com hash: ${parsedMessage.hash}`);
+    let filenameToSend;
 
     availableResources.map(value => {
-      if(value.hash == parsedMessage.hash) {
+      if (value.hash == parsedMessage.hash) {
         haveFile = true;
-        console.log('EU TENHO ESSE ARQUIVO!');
+        console.log('Encontrei o arquivo!\n\n');
+        filenameToSend = value.name;
       }
     })
 
-    if(haveFile) {
-      console.log('enviando o arquivo para o fulano');
-      server.send(Buffer.from('TOMA FIO'), 8001, '192.168.100.19', (error) => {
-        if (error) throw error
-        console.log(`PEER ENVIA`);
+    if (haveFile) {
+      console.log('Enviando o arquivo...');
+
+      fs.readFile(`build/src/client/${folder}/${filenameToSend}`, (err, content) => {
+
+        console.log('CONTEUDO DO ARQUIVO ', content.toString());
+
+        // const messageBuffer = Buffer.from(content);
+        
+        // console.log('CONTEUDO DEPOIS DO BUFFER ', messageBuffer);
+
+        const send = {
+          action: 'i_got_it',
+          value: content.toString()
+        }
+
+        server.send(Buffer.from(JSON.stringify(send)), 8000, '192.168.100.19', (error) => {
+          if (error) throw error
+          console.log(`PEER ENVIA`);
+        })
+
       })
+
+
     } else {
-      console.log('Não tenho esse arquivo... :/\n\n');
-      console.log('PEER NÃO ENVIA')
+      console.log('Não encontrei o arquivo... :/\n\n');
     }
 
     haveFile = false;
@@ -114,8 +146,8 @@ var recursiveReadLine = function () {
       console.log('Registrando seus arquivos...');
       const options = {
         hostname: 'localhost',
-        port: '8100',
-        path: '/register',
+        port: '8080',
+        path: '/peers/register',
         method: 'POST'
       }
 
@@ -124,10 +156,8 @@ var recursiveReadLine = function () {
         resources: availableResources
       }
 
-      console.log('address and resources ', addressAndResources);
-
-      // const responseFromPost = await HttpRequests.post(options, addressAndResources);
-      // console.log('resposta do post: ', responseFromPost);
+      const responseFromPost = await HttpRequests.post(options, addressAndResources);
+      console.log('resposta do post: ', responseFromPost);
 
       startHeartbeat();
     }
@@ -136,35 +166,65 @@ var recursiveReadLine = function () {
       console.log('Listando todos os seus recursos...');
       const options = {
         hostname: 'localhost',
-        port: '8100',
-        path: '/',
+        port: '8080',
+        path: '/peers',
         method: 'GET'
       }
       const response = await HttpRequests.get(options);
-      console.log('response from api', response);
+
+      console.log('Response: ', response);
     }
 
-    if (answer == 'get') {
+    if (answer.includes('get')) {
 
-      // const options = {
-      //   hostname: 'localhost',
-      //   port: '8100',
-      //   path: '/ip-ou-hash',
-      //   method: 'GET'
-      // }
+      const splittedAnswer = answer.split(" ");
 
-      // const responseFromAPI = await HttpRequests.get(options)
+      const desiredHash = splittedAnswer[1];
 
-      const requestFile = {
-        action: 'i_want',
-        hash: 'ff44dc1389131b5420370e25c56730a0'
+      console.log('eu quero o hash: ', desiredHash);
+
+      const options = {
+        hostname: 'localhost',
+        port: '8080',
+        path: '/peers/',
+        method: 'GET'
       }
 
-      //Tratar a resposta da API e pedir ao ip retornado + o arquivo que bate com o hash informado
-      server.send(Buffer.from(JSON.stringify(requestFile)), 8000, '192.168.100.19', (error) => {
-        if (error) throw error
-        console.log(`Servidor responde`);
-      });
+      const responseFromAPI = await HttpRequests.get(options);
+
+      const parsedFromAPI = JSON.parse(responseFromAPI);
+
+      let peerAddress;
+
+      parsedFromAPI.body.map((value, index) => {
+        value.resources.map((anotherValue, index) => {
+          if (anotherValue.hash == desiredHash) {
+            //encontrei o arquivo
+            peerAddress = value.ipAddress;
+          }
+        })
+      })
+
+      // if (peerAddress == undefined) {
+      //   console.log('Não encontrei o peer ou o hash informado. :/\n\n');
+      // } else {
+      //   console.log('Encontrei o dono do arquivo! Seu endereço: ', peerAddress);
+
+        const requestFile = {
+          action: 'i_want_it',
+          hash: '3d01dee3b04ba002b128a419f6fb0f91'
+        }
+
+        //const addressSplitted = peerAddress.split(':');
+
+        const addressSplitted = '192.168.100.19:8001';
+
+        //Tratar a resposta da API e pedir ao ip retornado + o arquivo que bate com o hash informado
+        server.send(Buffer.from(JSON.stringify(requestFile)), 8001, '192.168.100.19', (error) => {
+          if (error) throw error
+          console.log(`Servidor responde`);
+        });
+     // }
     }
 
     recursiveReadLine();

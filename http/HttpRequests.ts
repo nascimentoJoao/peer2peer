@@ -7,8 +7,14 @@ exports.post = (options, requestBody) => new Promise((resolve, reject) => {
     const req = http.request(options, res => {
         console.log(`statusCode: ${res.statusCode}`);
 
+        let body = '';
+
         res.on('data', data => {
-            process.stdout.write(data);
+            body += data;
+        });
+
+        res.on('end', _ => {
+            resolve(body);
         })
     })
 
@@ -23,8 +29,15 @@ exports.post = (options, requestBody) => new Promise((resolve, reject) => {
 exports.get = (options, requestBody) => new Promise((resolve, reject) => {
 
     const req = http.request(options, res => {
-        res.on('data', d => {
-            process.stdout.write(d);
+
+        let body = '';
+
+        res.on('data', chunk => {
+            body += chunk;
+        })
+
+        res.on('end', _  => {
+            resolve(body);
         })
     })
 
@@ -33,4 +46,32 @@ exports.get = (options, requestBody) => new Promise((resolve, reject) => {
     })
 
     req.end();
-})
+});
+
+exports.post = (options, requestBody) => new Promise((resolve, reject) => {
+
+    const data = JSON.stringify(requestBody);
+
+    const req = http.request(options, res => {
+        console.log(`statusCode: ${res.statusCode}`);
+
+        let body = '';
+
+        res.on('data', data => {
+            body += data;
+        });
+
+        res.on('end', _ => {
+            resolve(body);
+        })
+    })
+
+    req.on('error', error => {
+        console.log(error);
+        reject(error);
+    })
+
+    req.write(data);
+    req.end();
+});
+

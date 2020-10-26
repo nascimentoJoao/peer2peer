@@ -1,19 +1,22 @@
 import { expose } from 'threads/worker'
 const HttpRequests = require('../../../http/HttpRequests');
 
-expose(async function beat() {
+expose(async function beat(peerIp) {
     while(true) {
+        console.log('peer ip: ', peerIp);
         const options = {
-            hostname: '127.0.0.1',
+            hostname: 'localhost',
             port: '8080',
-            path: '/peers',
-            method: 'GET'
+            path: '/peers/ping',
+            method: 'PUT'
           }
 
-        console.log('chegou com sucesso');
-        HttpRequests.get(options);
+          const body = {
+              ip: peerIp
+          };
 
-        console.log('nao quebrou aeeee');
+        HttpRequests.put(body, options);
+
         await delay(4000);
     }
 })
