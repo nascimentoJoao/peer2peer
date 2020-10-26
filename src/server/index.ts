@@ -1,40 +1,13 @@
 import 'dotenv/config';
 import express from 'express';
 import { PeerController } from './controllers/PeerController';
-import { Worker } from 'worker_threads';
 import { Peer } from './interfaces/Peer';
-import { PeerEvents } from './enums/PeerEvents.enum';
+import { spawn, Thread, Worker } from 'threads';
 
 export class App {
 
   server : express.Application;
-  private worker : Worker;
-  private static peerList : Peer[] = [
-    {
-      ipAddress: "127.0.0.1:9032",
-      lastPing: new Date(),
-      resources: [
-        {
-          name: "Mortau Combati",
-          hash: "ADWASDBAWD23123o3912lf231"
-        }
-      ]
-    },
-    {
-      ipAddress: "192.168.1.1:4001",
-      lastPing: new Date(),
-      resources: [
-        {
-          name: "GTA Rio de Janeiro",
-          hash: "dw9923kjglskdnflje23"
-        },
-        {
-          name: "Kid_Bengala_007",
-          hash: "a12345678"
-        }
-      ]
-    }
-  ];
+  private static peerList : Peer[];
   private static instance : App;
 
   static getInstance() : App {
@@ -49,6 +22,7 @@ export class App {
     this.registerMiddlewares();
     this.registerRoutes();
     this.registerWorkers();
+    App.peerList = [];
     this.listen();
   }
 
@@ -64,19 +38,9 @@ export class App {
     this.server.use(express.json());
   }
 
-  private registerWorkers() {
-    // this.worker = new Worker('./workers.js', {
-    //   workerData: {
-    //     path: './workers/heartbeat.ts'
-    //   }
-    // });
-    // this.registerWorkerListeners();
-  }
-
-  private registerWorkerListeners() {
-    this.worker.addListener(PeerEvents.PEER_NOT_RESPONDING, () => {
-      console.log(`PEER IS NOT RESPONDING. SHOULD BE REMOVED FROM THE LIST.`) 
-    });
+  private async registerWorkers() {
+    const heartbeat = await spawn(new Worker("workers/heartbeat"));
+    await heartbeat(App.peerList);
   }
 
   private registerRoutes() {

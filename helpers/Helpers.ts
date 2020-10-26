@@ -1,4 +1,4 @@
-import { Resource } from "../interfaces/Resource";
+import { Resource } from "../src/server/interfaces/Resource";
 
 const path = require('path');
 const fs = require('fs');
