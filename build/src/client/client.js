@@ -87,7 +87,7 @@ var startHeartbeat = function () { return __awaiter(void 0, void 0, void 0, func
             case 0: return [4 /*yield*/, threads_1.spawn(new threads_1.Worker("./workers/sendHeartbeat"))];
             case 1:
                 heartbeatFunction = _a.sent();
-                return [4 /*yield*/, heartbeatFunction(host + ":" + port)];
+                return [4 /*yield*/, heartbeatFunction(host + ":" + port, "" + port)];
             case 2:
                 _a.sent();
                 return [2 /*return*/];
@@ -104,48 +104,48 @@ server.on('message', function (messageContent, rinfo) {
     if (parsedMessage.action == 'i_got_it') {
         //console.log('CONTEUDO TEXTO: ', parsedMessage.value);
         var contentOfFile = parsedMessage.value;
-        fs.writeFile("build/src/client/" + folder + "/received", contentOfFile, function (error) {
+        fs.writeFile("build/src/client/" + folder + "/" + parsedMessage.name, contentOfFile, function (error) {
             if (error) {
                 console.log('Error happened! ', error);
                 return error;
             }
-            console.log('File received with success!');
+            console.log("\n\nArquivo recebido! Voc\u00EA pode acess\u00E1-lo em: build/src/client/" + folder + "/" + parsedMessage.name);
         });
     }
     var haveFile = false;
     if (parsedMessage.action == 'i_want_it') {
-        console.log("O usu\u00E1rio em: " + rinfo.address + ":" + rinfo.port + " quer o arquivo com hash: " + parsedMessage.hash);
+        console.log("\n\nO usu\u00E1rio em: " + rinfo.address + ":" + rinfo.port + " quer o arquivo com hash: " + parsedMessage.hash);
         var filenameToSend_1;
         availableResources.map(function (value) {
             if (value.hash == parsedMessage.hash) {
                 haveFile = true;
-                console.log('Encontrei o arquivo!\n\n');
                 filenameToSend_1 = value.name;
             }
         });
         if (haveFile) {
             console.log('Enviando o arquivo...');
             fs.readFile("build/src/client/" + folder + "/" + filenameToSend_1, function (err, content) {
-                console.log('CONTEUDO DO ARQUIVO ', content.toString());
-                // const messageBuffer = Buffer.from(content);
-                // console.log('CONTEUDO DEPOIS DO BUFFER ', messageBuffer);
                 var send = {
                     action: 'i_got_it',
+                    name: filenameToSend_1,
                     value: content.toString()
                 };
                 server.send(Buffer.from(JSON.stringify(send)), rinfo.port, rinfo.address, function (error) {
-                    if (error)
+                    if (error) {
+                        console.log("Erro ao enviar arquivo. Erro: " + error);
                         throw error;
-                    console.log("PEER ENVIA");
+                    }
+                    else {
+                        console.log("\n\nArquivo enviado com sucesso!");
+                    }
                 });
             });
         }
         else {
-            console.log('Não encontrei o arquivo... :/\n\n');
+            console.log('\n\nNão encontrei o arquivo... :/');
         }
         haveFile = false;
     }
-    console.log("Servidor recebeu '" + messageContent + "' de " + rinfo.address + ":" + rinfo.port);
 });
 console.log('##### INICIANDO PEER #####\nDigite um dos comandos:\
 \n\nexit: encerra o peer\nregister: registra o peer e seus arquivos\nresources: retorna os recursos e seus respectivos peers\
@@ -154,16 +154,16 @@ generateResourcesAndHashes();
 var recursiveReadLine = function () {
     input.question('Digite a opção desejada: \n\n', function (answer) {
         return __awaiter(this, void 0, void 0, function () {
-            var addressAndResources, options, responseFromPost, options, response, splittedAnswer, desiredHash, options, responseFromAPI, parsedFromAPI, peerAddress, i, resources, j, requestFile, addressSplitted;
+            var addressAndResources, options, e_1, options, response, err_1, formattedText_1, splittedAnswer, desiredHash, options, responseFromAPI, parsedFromAPI, peerAddress, i, resources, j, requestFile, addressSplitted, error_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        if (answer == 'exit') {
+                        if (answer.toLowerCase() == 'exit') {
                             console.log('Encerrando a aplicação!');
                             return [2 /*return*/, input.close()];
                         }
-                        if (!(answer == 'register')) return [3 /*break*/, 2];
-                        console.log('Registrando seus arquivos...');
+                        if (!(answer.toLowerCase() == 'register')) return [3 /*break*/, 4];
+                        console.log('\nRegistrando seus arquivos...');
                         addressAndResources = JSON.stringify({
                             ip: host + ":" + port,
                             resources: availableResources
@@ -178,59 +178,74 @@ var recursiveReadLine = function () {
                                 'Content-Length': addressAndResources.length
                             }
                         };
-                        console.log('Enviando requisição para: \n\n', options);
-                        return [4 /*yield*/, HttpRequests.post(options, addressAndResources)];
+                        _a.label = 1;
                     case 1:
-                        responseFromPost = _a.sent();
-                        console.log('resposta do post: ', responseFromPost);
-                        startHeartbeat();
-                        _a.label = 2;
+                        _a.trys.push([1, 3, , 4]);
+                        return [4 /*yield*/, HttpRequests.post(options, addressAndResources)];
                     case 2:
-                        if (!(answer == 'resources')) return [3 /*break*/, 4];
-                        console.log('Listando todos os seus recursos...');
+                        _a.sent();
+                        console.log('\n\nPeer registrado com sucesso!');
+                        console.log("\nVerifique a pasta logs/ para verificar o status do heartbeat.\n\n");
+                        startHeartbeat();
+                        return [3 /*break*/, 4];
+                    case 3:
+                        e_1 = _a.sent();
+                        console.log('\n\nNão consegui registrar os arquivos. Tente novamente...\n');
+                        return [3 /*break*/, 4];
+                    case 4:
+                        if (!(answer.toLowerCase() == 'resources')) return [3 /*break*/, 9];
+                        console.log('Listando os recursos disponíveis:');
                         options = {
                             hostname: process.env.SERVER,
                             port: '8080',
                             path: '/peers',
                             method: 'GET'
                         };
+                        response = void 0;
+                        _a.label = 5;
+                    case 5:
+                        _a.trys.push([5, 7, , 8]);
                         return [4 /*yield*/, HttpRequests.get(options)];
-                    case 3:
+                    case 6:
                         response = _a.sent();
-                        console.log('Response: ', response);
-                        _a.label = 4;
-                    case 4:
-                        if (!answer.includes('get')) return [3 /*break*/, 6];
+                        return [3 /*break*/, 8];
+                    case 7:
+                        err_1 = _a.sent();
+                        return [3 /*break*/, 8];
+                    case 8:
+                        response = JSON.parse(response);
+                        formattedText_1 = [];
+                        response.body.map(function (value, index) {
+                            value.resources.map(function (innerValue, innerIndex) {
+                                var object = { id: index, IP: value.ip, NOME: "" + innerValue.name, MD5SUM: "" + innerValue.hash };
+                                formattedText_1.push(object);
+                            });
+                        });
+                        console.table(formattedText_1);
+                        _a.label = 9;
+                    case 9:
+                        if (!answer.toLowerCase().includes('get')) return [3 /*break*/, 13];
                         splittedAnswer = answer.split(" ");
                         desiredHash = splittedAnswer[1];
-                        console.log('eu quero o hash: ', desiredHash);
+                        console.log('Tentando buscar arquivo com o hash: ', desiredHash);
                         options = {
                             hostname: process.env.SERVER,
                             port: '8080',
                             path: '/peers/',
                             method: 'GET'
                         };
+                        responseFromAPI = void 0;
+                        _a.label = 10;
+                    case 10:
+                        _a.trys.push([10, 12, , 13]);
                         return [4 /*yield*/, HttpRequests.get(options)];
-                    case 5:
+                    case 11:
                         responseFromAPI = _a.sent();
                         parsedFromAPI = JSON.parse(responseFromAPI);
                         peerAddress = void 0;
-                        console.log('parsed from API: ', parsedFromAPI);
-                        // parsedFromAPI.body.map((value, index) => {
-                        //   value.resources.map((anotherValue, index) => {
-                        //     console.log('another hash: ', anotherValue.hash);
-                        //     console.log('desired hash: ', desiredHash);
-                        //     if (anotherValue.hash === desiredHash) {
-                        //       //encontrei o arquivo
-                        //       peerAddress = value.ipAddress;
-                        //       break;
-                        //     }
-                        //   })
-                        // })
                         for (i = 0; i < parsedFromAPI.body.length; i++) {
                             resources = parsedFromAPI.body[i].resources;
                             for (j = 0; j < resources.length; j++) {
-                                // console.log('resources[j]: ', resources[j]);
                                 if (resources[j].hash === desiredHash) {
                                     peerAddress = parsedFromAPI.body[i].ip;
                                     break;
@@ -240,7 +255,10 @@ var recursiveReadLine = function () {
                                 }
                             }
                         }
-                        if (peerAddress == undefined) {
+                        if (peerAddress == host + ":" + port) {
+                            console.log('Ei, esse arquivo é seu!\n');
+                        }
+                        else if (peerAddress == undefined) {
                             console.log('Não encontrei o peer ou o hash informado. :/\n\n');
                         }
                         else {
@@ -255,14 +273,21 @@ var recursiveReadLine = function () {
                             // console.log(addressSplitted);
                             // Tratar a resposta da API e pedir ao ip retornado + o arquivo que bate com o hash informado
                             server.send(Buffer.from(JSON.stringify(requestFile)), parseInt(addressSplitted[1]), addressSplitted[0], function (error) {
-                                if (error)
+                                if (error) {
+                                    console.log("Erro ao solicitar arquivo! Erro: " + error);
                                     throw error;
-                                console.log('error: ', error);
-                                console.log("Servidor responde");
+                                }
+                                else {
+                                    console.log("Solicita\u00E7\u00E3o enviada. Aguardando...");
+                                }
                             });
                         }
-                        _a.label = 6;
-                    case 6:
+                        return [3 /*break*/, 13];
+                    case 12:
+                        error_1 = _a.sent();
+                        console.log('Não consegui retornar nada do servidor.\n\n');
+                        return [3 /*break*/, 13];
+                    case 13:
                         recursiveReadLine();
                         return [2 /*return*/];
                 }

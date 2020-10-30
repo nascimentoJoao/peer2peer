@@ -30,8 +30,6 @@ router.get('/', (request: Request, response: Response) => {
 router.post('/register', (request: Request, response: Response) => {
   const payload : PeerPayload = request.body;
 
-  console.log('request body: ', request.body);
-
   const newPeer : Peer = {
     ipAddress: payload.ip,
     lastPing: new Date(),

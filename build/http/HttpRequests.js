@@ -1,7 +1,6 @@
 "use strict";
 var http = require('http');
 exports.post = function (options, requestBody) { return new Promise(function (resolve, reject) {
-    console.log('BODY: ', requestBody);
     var req = http.request(options, function (res) {
         var body = '';
         res.on('data', function (data) {
@@ -12,7 +11,8 @@ exports.post = function (options, requestBody) { return new Promise(function (re
         });
     });
     req.on('error', function (error) {
-        console.log(error);
+        console.log("Erro tentando efetuar chamada POST!\n\n " + error);
+        reject(error);
     });
     req.write(requestBody);
     req.end();
@@ -28,7 +28,8 @@ exports.get = function (options, requestBody) { return new Promise(function (res
         });
     });
     req.on('error', function (error) {
-        console.log('error ', error);
+        console.log("Erro tentando efetuar chamada GET!\n\n " + error);
+        reject(error);
     });
     req.end();
 }); };
@@ -43,7 +44,7 @@ exports.put = function (options, requestBody) { return new Promise(function (res
         });
     });
     req.on('error', function (error) {
-        console.log(error);
+        console.log("Erro tentando efetuar chamada PUT!\n\n " + error);
         reject(error);
     });
     req.write(requestBody);

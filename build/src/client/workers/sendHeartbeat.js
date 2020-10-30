@@ -39,16 +39,18 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
 var worker_1 = require("threads/worker");
 var HttpRequests = require('../../../http/HttpRequests');
-worker_1.expose(function beat(peerIp) {
+var fs = require('fs');
+worker_1.expose(function beat(peerIp, port) {
     return __awaiter(this, void 0, void 0, function () {
-        var count, body, options;
+        var dateObj, month, day, year, body, options, heartbeat, stringToLog, err_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    count = 1;
-                    _a.label = 1;
-                case 1:
-                    if (!true) return [3 /*break*/, 3];
+                    if (!true) return [3 /*break*/, 6];
+                    dateObj = new Date();
+                    month = dateObj.getUTCMonth() + 1;
+                    day = dateObj.getUTCDate();
+                    year = dateObj.getUTCFullYear();
                     body = JSON.stringify({
                         ip: peerIp
                     });
@@ -62,18 +64,35 @@ worker_1.expose(function beat(peerIp) {
                             'Content-Length': body.length
                         }
                     };
-                    HttpRequests.put(options, body);
-                    if (count <= 5) {
-                        console.log('OPTIONS: \n\n', options);
-                        console.log('Estou mandando minhas batidas ao servidor. No 5o ping, vou parar de mostrar a mensagem.\n\n');
-                        console.log("Ping " + count + ".");
-                        count++;
-                    }
-                    return [4 /*yield*/, delay(4000)];
+                    heartbeat = void 0;
+                    stringToLog = '';
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, HttpRequests.put(options, body)];
                 case 2:
+                    heartbeat = _a.sent();
+                    heartbeat = JSON.parse(heartbeat);
+                    if (heartbeat.code === 204) {
+                        stringToLog = "[" + peerIp + "]_fine_at_" + new Date() + "\n";
+                    }
+                    return [3 /*break*/, 4];
+                case 3:
+                    err_1 = _a.sent();
+                    stringToLog = "[" + peerIp + "]_error_at_" + new Date() + "_[traz_cloroquina_pro_pai]\n";
+                    return [3 /*break*/, 4];
+                case 4:
+                    fs.appendFile("logs/heartbeat/" + year + "-" + month + "-" + day + ".txt", stringToLog, { flag: 'a+' }, function (error) {
+                        if (error) {
+                            console.log('Error happened! ', error);
+                            return error;
+                        }
+                    });
+                    return [4 /*yield*/, delay(4000)];
+                case 5:
                     _a.sent();
-                    return [3 /*break*/, 1];
-                case 3: return [2 /*return*/];
+                    return [3 /*break*/, 0];
+                case 6: return [2 /*return*/];
             }
         });
     });

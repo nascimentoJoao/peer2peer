@@ -1,9 +1,6 @@
 const http = require('http')
 
 exports.post = (options, requestBody) => new Promise((resolve, reject) => {
-
-    console.log('BODY: ', requestBody);
-
     const req = http.request(options, res => {
 
         let body = '';
@@ -18,7 +15,8 @@ exports.post = (options, requestBody) => new Promise((resolve, reject) => {
     })
 
     req.on('error', error => {
-        console.log(error);
+        console.log(`Erro tentando efetuar chamada POST!\n\n ${error}`);
+        reject(error);
     })
 
     req.write(requestBody);
@@ -41,7 +39,8 @@ exports.get = (options, requestBody) => new Promise((resolve, reject) => {
     })
 
     req.on('error', error => {
-        console.log('error ', error);
+        console.log(`Erro tentando efetuar chamada GET!\n\n ${error}`);
+        reject(error);
     })
 
     req.end();
@@ -63,7 +62,7 @@ exports.put = (options, requestBody) => new Promise((resolve, reject) => {
     })
 
     req.on('error', error => {
-        console.log(error);
+        console.log(`Erro tentando efetuar chamada PUT!\n\n ${error}`);
         reject(error);
     })
 

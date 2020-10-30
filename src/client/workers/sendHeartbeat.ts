@@ -1,12 +1,16 @@
 import 'dotenv/config';
 import { expose } from 'threads/worker'
 const HttpRequests = require('../../../http/HttpRequests');
+const fs = require('fs');
 
-expose(async function beat(peerIp) {
-
-    let count = 1;
+expose(async function beat(peerIp, port) {
 
     while (true) {
+
+        var dateObj = new Date();
+        var month = dateObj.getUTCMonth() + 1; //months from 1-12
+        var day = dateObj.getUTCDate();
+        var year = dateObj.getUTCFullYear();
 
         const body = JSON.stringify({
             ip: peerIp
@@ -22,16 +26,26 @@ expose(async function beat(peerIp) {
                 'Content-Length': body.length
             }
         }
-        
 
-        HttpRequests.put(options, body);
+        let heartbeat;
+        let stringToLog = '';
 
-        if(count <= 5) {
-            console.log('OPTIONS: \n\n', options);
-            console.log('Estou mandando minhas batidas ao servidor. No 5o ping, vou parar de mostrar a mensagem.\n\n')
-            console.log(`Ping ${count}.`);
-            count++;
+        try {
+            heartbeat = await HttpRequests.put(options, body);
+            heartbeat = JSON.parse(heartbeat);
+            if (heartbeat.code === 204) {
+                stringToLog = `[${peerIp}]_fine_at_${new Date()}\n`;
+            }
+        } catch (err) {
+            stringToLog = `[${peerIp}]_error_at_${new Date()}_[traz_cloroquina_pro_pai]\n`
         }
+
+        fs.appendFile(`logs/heartbeat/${year}-${month}-${day}.txt`, stringToLog, { flag: 'a+' }, (error) => {
+            if (error) {
+                console.log('Error happened! ', error);
+                return error;
+            }
+        })
 
         await delay(4000);
     }
