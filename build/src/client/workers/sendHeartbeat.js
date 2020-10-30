@@ -52,7 +52,7 @@ worker_1.expose(function beat(peerIp) {
                         ip: peerIp
                     });
                     options = {
-                        hostname: 'localhost',
+                        hostname: process.env.SERVER,
                         port: 8080,
                         path: '/peers/ping',
                         method: 'PUT',

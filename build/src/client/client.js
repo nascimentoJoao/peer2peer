@@ -187,7 +187,7 @@ var recursiveReadLine = function () {
                         if (!(answer == 'resources')) return [3 /*break*/, 4];
                         console.log('Listando todos os seus recursos...');
                         options = {
-                            hostname: 'localhost',
+                            hostname: process.env.SERVER,
                             port: '8080',
                             path: '/peers',
                             method: 'GET'
@@ -203,7 +203,7 @@ var recursiveReadLine = function () {
                         desiredHash = splittedAnswer[1];
                         console.log('eu quero o hash: ', desiredHash);
                         options = {
-                            hostname: 'localhost',
+                            hostname: process.env.SERVER,
                             port: '8080',
                             path: '/peers/',
                             method: 'GET'
