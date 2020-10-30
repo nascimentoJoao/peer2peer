@@ -177,6 +177,7 @@ var recursiveReadLine = function () {
                                 'Content-Length': addressAndResources.length
                             }
                         };
+                        console.log('Enviando requisição para: \n\n', options);
                         return [4 /*yield*/, HttpRequests.post(options, addressAndResources)];
                     case 1:
                         responseFromPost = _a.sent();

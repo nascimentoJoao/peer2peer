@@ -63,6 +63,7 @@ worker_1.expose(function beat(peerIp) {
                     };
                     HttpRequests.put(options, body);
                     if (count <= 5) {
+                        console.log('OPTIONS: \n\n', options);
                         console.log('Estou mandando minhas batidas ao servidor. No 5o ping, vou parar de mostrar a mensagem.\n\n');
                         console.log("Ping " + count + ".");
                         count++;

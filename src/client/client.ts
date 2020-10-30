@@ -161,6 +161,8 @@ var recursiveReadLine = function () {
         }
       }
 
+      console.log('Enviando requisição para: \n\n', options);
+
       const responseFromPost = await HttpRequests.post(options, addressAndResources);
       console.log('resposta do post: ', responseFromPost);
 
