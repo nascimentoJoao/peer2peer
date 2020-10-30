@@ -110,7 +110,10 @@ server.on('message', function (messageContent, rinfo) {
                 return error;
             }
             console.log("\n\nArquivo recebido! Voc\u00EA pode acess\u00E1-lo em: build/src/client/" + folder + "/" + parsedMessage.name);
+            console.log("\n\nAgora voc\u00EA \u00E9 um peer que fornece o arquivo " + parsedMessage.name + "!");
         });
+        generateResourcesAndHashes();
+        register();
     }
     var haveFile = false;
     if (parsedMessage.action == 'i_want_it') {
@@ -147,6 +150,44 @@ server.on('message', function (messageContent, rinfo) {
         haveFile = false;
     }
 });
+var register = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var addressAndResources, options, e_1;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                console.log('\nRegistrando seus arquivos...');
+                addressAndResources = JSON.stringify({
+                    ip: host + ":" + port,
+                    resources: availableResources
+                });
+                options = {
+                    hostname: process.env.SERVER,
+                    port: 8080,
+                    path: '/peers/register',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': addressAndResources.length
+                    }
+                };
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, HttpRequests.post(options, addressAndResources)];
+            case 2:
+                _a.sent();
+                console.log('\n\nPeer registrado com sucesso!');
+                console.log("\nVerifique o arquivo de log na ra\u00EDz do projeto e veja o status do heartbeat.\n\n");
+                startHeartbeat();
+                return [3 /*break*/, 4];
+            case 3:
+                e_1 = _a.sent();
+                console.log('\n\nNão consegui registrar os arquivos. Tente novamente...\n');
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); };
 console.log('##### INICIANDO PEER #####\nDigite um dos comandos:\
 \n\nexit: encerra o peer\nregister: registra o peer e seus arquivos\nresources: retorna os recursos e seus respectivos peers\
 \nget <ip:port> <file>: inicia a transferência do arquivo para sua respectiva pasta\n\n');
@@ -154,7 +195,7 @@ generateResourcesAndHashes();
 var recursiveReadLine = function () {
     input.question('Digite a opção desejada: \n\n', function (answer) {
         return __awaiter(this, void 0, void 0, function () {
-            var addressAndResources, options, e_1, options, response, err_1, formattedText_1, splittedAnswer, desiredHash, options, responseFromAPI, parsedFromAPI, peerAddress, i, resources, j, requestFile, addressSplitted, error_1;
+            var options, response, err_1, formattedText_1, splittedAnswer, desiredHash, options, responseFromAPI, parsedFromAPI, peerAddress, i, resources, j, requestFile, addressSplitted, error_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -162,38 +203,13 @@ var recursiveReadLine = function () {
                             console.log('Encerrando a aplicação!');
                             return [2 /*return*/, input.close()];
                         }
-                        if (!(answer.toLowerCase() == 'register')) return [3 /*break*/, 4];
-                        console.log('\nRegistrando seus arquivos...');
-                        addressAndResources = JSON.stringify({
-                            ip: host + ":" + port,
-                            resources: availableResources
-                        });
-                        options = {
-                            hostname: process.env.SERVER,
-                            port: 8080,
-                            path: '/peers/register',
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Content-Length': addressAndResources.length
-                            }
-                        };
-                        _a.label = 1;
+                        if (!(answer.toLowerCase() == 'register')) return [3 /*break*/, 2];
+                        return [4 /*yield*/, register()];
                     case 1:
-                        _a.trys.push([1, 3, , 4]);
-                        return [4 /*yield*/, HttpRequests.post(options, addressAndResources)];
-                    case 2:
                         _a.sent();
-                        console.log('\n\nPeer registrado com sucesso!');
-                        console.log("\nVerifique a pasta logs/ para verificar o status do heartbeat.\n\n");
-                        startHeartbeat();
-                        return [3 /*break*/, 4];
-                    case 3:
-                        e_1 = _a.sent();
-                        console.log('\n\nNão consegui registrar os arquivos. Tente novamente...\n');
-                        return [3 /*break*/, 4];
-                    case 4:
-                        if (!(answer.toLowerCase() == 'resources')) return [3 /*break*/, 9];
+                        _a.label = 2;
+                    case 2:
+                        if (!(answer.toLowerCase() == 'resources')) return [3 /*break*/, 7];
                         console.log('Listando os recursos disponíveis:');
                         options = {
                             hostname: process.env.SERVER,
@@ -202,17 +218,17 @@ var recursiveReadLine = function () {
                             method: 'GET'
                         };
                         response = void 0;
-                        _a.label = 5;
-                    case 5:
-                        _a.trys.push([5, 7, , 8]);
+                        _a.label = 3;
+                    case 3:
+                        _a.trys.push([3, 5, , 6]);
                         return [4 /*yield*/, HttpRequests.get(options)];
-                    case 6:
+                    case 4:
                         response = _a.sent();
-                        return [3 /*break*/, 8];
-                    case 7:
+                        return [3 /*break*/, 6];
+                    case 5:
                         err_1 = _a.sent();
-                        return [3 /*break*/, 8];
-                    case 8:
+                        return [3 /*break*/, 6];
+                    case 6:
                         response = JSON.parse(response);
                         formattedText_1 = [];
                         response.body.map(function (value, index) {
@@ -222,9 +238,9 @@ var recursiveReadLine = function () {
                             });
                         });
                         console.table(formattedText_1);
-                        _a.label = 9;
-                    case 9:
-                        if (!answer.toLowerCase().includes('get')) return [3 /*break*/, 13];
+                        _a.label = 7;
+                    case 7:
+                        if (!answer.toLowerCase().includes('get')) return [3 /*break*/, 11];
                         splittedAnswer = answer.split(" ");
                         desiredHash = splittedAnswer[1];
                         console.log('Tentando buscar arquivo com o hash: ', desiredHash);
@@ -235,11 +251,11 @@ var recursiveReadLine = function () {
                             method: 'GET'
                         };
                         responseFromAPI = void 0;
-                        _a.label = 10;
-                    case 10:
-                        _a.trys.push([10, 12, , 13]);
+                        _a.label = 8;
+                    case 8:
+                        _a.trys.push([8, 10, , 11]);
                         return [4 /*yield*/, HttpRequests.get(options)];
-                    case 11:
+                    case 9:
                         responseFromAPI = _a.sent();
                         parsedFromAPI = JSON.parse(responseFromAPI);
                         peerAddress = void 0;
@@ -282,12 +298,12 @@ var recursiveReadLine = function () {
                                 }
                             });
                         }
-                        return [3 /*break*/, 13];
-                    case 12:
+                        return [3 /*break*/, 11];
+                    case 10:
                         error_1 = _a.sent();
                         console.log('Não consegui retornar nada do servidor.\n\n');
-                        return [3 /*break*/, 13];
-                    case 13:
+                        return [3 /*break*/, 11];
+                    case 11:
                         recursiveReadLine();
                         return [2 /*return*/];
                 }

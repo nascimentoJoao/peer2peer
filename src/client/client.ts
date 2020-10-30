@@ -77,8 +77,11 @@ server.on('message', (messageContent, rinfo) => {
       }
 
       console.log(`\n\nArquivo recebido! Você pode acessá-lo em: build/src/client/${folder}/${parsedMessage.name}`);
+      console.log(`\n\nAgora você é um peer que fornece o arquivo ${parsedMessage.name}!`);
     })
 
+    generateResourcesAndHashes();
+    register();
   }
 
   let haveFile = false;
@@ -123,6 +126,34 @@ server.on('message', (messageContent, rinfo) => {
   }
 });
 
+const register = async () => {
+  console.log('\nRegistrando seus arquivos...');
+
+  const addressAndResources = JSON.stringify({
+    ip: `${host}:${port}`,
+    resources: availableResources
+  });
+
+  const options = {
+    hostname: process.env.SERVER,
+    port: 8080,
+    path: '/peers/register',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': addressAndResources.length
+    }
+  }
+  try {
+    await HttpRequests.post(options, addressAndResources);
+    console.log('\n\nPeer registrado com sucesso!');
+    console.log(`\nVerifique o arquivo de log na raíz do projeto e veja o status do heartbeat.\n\n`);
+    startHeartbeat();
+  } catch (e) {
+    console.log('\n\nNão consegui registrar os arquivos. Tente novamente...\n')
+  }
+}
+
 console.log('##### INICIANDO PEER #####\nDigite um dos comandos:\
 \n\nexit: encerra o peer\nregister: registra o peer e seus arquivos\nresources: retorna os recursos e seus respectivos peers\
 \nget <ip:port> <file>: inicia a transferência do arquivo para sua respectiva pasta\n\n')
@@ -138,31 +169,7 @@ var recursiveReadLine = function () {
     }
 
     if (answer.toLowerCase() == 'register') {
-      console.log('\nRegistrando seus arquivos...');
-
-      const addressAndResources = JSON.stringify({
-        ip: `${host}:${port}`,
-        resources: availableResources
-      });
-
-      const options = {
-        hostname: process.env.SERVER,
-        port: 8080,
-        path: '/peers/register',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': addressAndResources.length
-        }
-      }
-      try {
-        await HttpRequests.post(options, addressAndResources);
-        console.log('\n\nPeer registrado com sucesso!');
-        console.log(`\nVerifique a pasta logs/ para verificar o status do heartbeat.\n\n`);
-        startHeartbeat();
-      } catch (e) {
-        console.log('\n\nNão consegui registrar os arquivos. Tente novamente...\n')
-      }
+      await register();
     }
 
     if (answer.toLowerCase() == 'resources') {
