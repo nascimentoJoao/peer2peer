@@ -46,7 +46,7 @@ worker_1.expose(function beat() {
                 case 0:
                     if (!true) return [3 /*break*/, 2];
                     options = {
-                        hostname: '127.0.0.1',
+                        hostname: process.env.SERVER,
                         port: '8080',
                         path: '/peers',
                         method: 'GET'

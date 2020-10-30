@@ -151,7 +151,7 @@ var recursiveReadLine = function () {
       });
 
       const options = {
-        hostname: '127.0.0.1',
+        hostname: process.env.SERVER,
         port: 8080,
         path: '/peers/register',
         method: 'POST',
