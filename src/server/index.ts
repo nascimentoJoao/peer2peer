@@ -1,15 +1,13 @@
 import 'dotenv/config';
 import express from 'express';
 import { PeerController } from './controllers/PeerController';
-import { Worker } from 'worker_threads';
-import { Peer } from './models/Peer';
-import { PeerEvents } from './enums/PeerEvents.enum';
+import { Peer } from './interfaces/Peer';
+import { spawn, Thread, Worker } from 'threads';
 
 export class App {
 
   server : express.Application;
-  private worker : Worker;
-  private peerList : Peer[];
+  private static peerList : Peer[];
   private static instance : App;
 
   static getInstance() : App {
@@ -24,34 +22,25 @@ export class App {
     this.registerMiddlewares();
     this.registerRoutes();
     this.registerWorkers();
+    App.peerList = [];
     this.listen();
   }
 
   get peers() : Peer[] {
-    return this.peerList; 
+    return App.peerList; 
   }
 
   set peers(newPeers : Peer[]) {
-    this.peerList = newPeers;
+    App.peerList = newPeers;
   }
 
   private registerMiddlewares() {
     this.server.use(express.json());
   }
 
-  private registerWorkers() {
-    // this.worker = new Worker('./workers.js', {
-    //   workerData: {
-    //     path: './workers/heartbeat.ts'
-    //   }
-    // });
-    // this.registerWorkerListeners();
-  }
-
-  private registerWorkerListeners() {
-    this.worker.addListener(PeerEvents.PEER_NOT_RESPONDING, () => {
-      console.log(`PEER IS NOT RESPONDING. SHOULD BE REMOVED FROM THE LIST.`) 
-    });
+  private async registerWorkers() {
+    const heartbeat = await spawn(new Worker("workers/heartbeat"));
+    await heartbeat(App.peerList);
   }
 
   private registerRoutes() {
