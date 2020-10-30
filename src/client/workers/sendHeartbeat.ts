@@ -2,25 +2,38 @@ import { expose } from 'threads/worker'
 const HttpRequests = require('../../../http/HttpRequests');
 
 expose(async function beat(peerIp) {
-    while(true) {
-        console.log('peer ip: ', peerIp);
+
+    let count = 1;
+
+    while (true) {
+
+        const body = JSON.stringify({
+            ip: peerIp
+        });
+
         const options = {
             hostname: 'localhost',
-            port: '8080',
+            port: 8080,
             path: '/peers/ping',
-            method: 'PUT'
-          }
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': body.length
+            }
+        }
 
-          const body = {
-              ip: peerIp
-          };
+        HttpRequests.put(options, body);
 
-        HttpRequests.put(body, options);
+        if(count <= 5) {
+            console.log('Estou mandando minhas batidas ao servidor. No 5o ping, vou parar de mostrar a mensagem.\n\n')
+            console.log(`Ping ${count}.`);
+            count++;
+        }
 
         await delay(4000);
     }
 })
 
 function delay(ms: number) {
-    return new Promise( resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms));
 }

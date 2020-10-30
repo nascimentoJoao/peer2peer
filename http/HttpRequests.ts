@@ -2,10 +2,9 @@ const http = require('http')
 
 exports.post = (options, requestBody) => new Promise((resolve, reject) => {
 
-    const data = JSON.stringify(requestBody);
+    console.log('BODY: ', requestBody);
 
     const req = http.request(options, res => {
-        console.log(`statusCode: ${res.statusCode}`);
 
         let body = '';
 
@@ -22,7 +21,7 @@ exports.post = (options, requestBody) => new Promise((resolve, reject) => {
         console.log(error);
     })
 
-    req.write(data);
+    req.write(requestBody);
     req.end();
 });
 
@@ -48,12 +47,9 @@ exports.get = (options, requestBody) => new Promise((resolve, reject) => {
     req.end();
 });
 
-exports.post = (options, requestBody) => new Promise((resolve, reject) => {
-
-    const data = JSON.stringify(requestBody);
+exports.put = (options, requestBody) => new Promise((resolve, reject) => {
 
     const req = http.request(options, res => {
-        console.log(`statusCode: ${res.statusCode}`);
 
         let body = '';
 
@@ -71,7 +67,7 @@ exports.post = (options, requestBody) => new Promise((resolve, reject) => {
         reject(error);
     })
 
-    req.write(data);
+    req.write(requestBody);
     req.end();
 });
 

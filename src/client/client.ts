@@ -65,17 +65,17 @@ server.on('message', (messageContent, rinfo) => {
   const parsedMessage = JSON.parse(message);
 
 
-  if(parsedMessage.action == 'i_got_it') {
+  if (parsedMessage.action == 'i_got_it') {
     //console.log('CONTEUDO TEXTO: ', parsedMessage.value);
     const contentOfFile = parsedMessage.value;
 
     fs.writeFile(`build/src/client/${folder}/received`, contentOfFile, (error) => {
-        if(error) {
-          console.log('Error happened! ', error);
-          return error;
-        }
+      if (error) {
+        console.log('Error happened! ', error);
+        return error;
+      }
 
-        console.log('File received with success!');
+      console.log('File received with success!');
     })
 
   }
@@ -102,7 +102,7 @@ server.on('message', (messageContent, rinfo) => {
         console.log('CONTEUDO DO ARQUIVO ', content.toString());
 
         // const messageBuffer = Buffer.from(content);
-        
+
         // console.log('CONTEUDO DEPOIS DO BUFFER ', messageBuffer);
 
         const send = {
@@ -110,7 +110,7 @@ server.on('message', (messageContent, rinfo) => {
           value: content.toString()
         }
 
-        server.send(Buffer.from(JSON.stringify(send)), 8000, '192.168.100.19', (error) => {
+        server.send(Buffer.from(JSON.stringify(send)), rinfo.port, rinfo.address, (error) => {
           if (error) throw error
           console.log(`PEER ENVIA`);
         })
@@ -144,16 +144,21 @@ var recursiveReadLine = function () {
 
     if (answer == 'register') {
       console.log('Registrando seus arquivos...');
-      const options = {
-        hostname: 'localhost',
-        port: '8080',
-        path: '/peers/register',
-        method: 'POST'
-      }
 
-      const addressAndResources = {
+      const addressAndResources = JSON.stringify({
         ip: `${host}:${port}`,
         resources: availableResources
+      });
+
+      const options = {
+        hostname: '127.0.0.1',
+        port: 8080,
+        path: '/peers/register',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': addressAndResources.length
+        }
       }
 
       const responseFromPost = await HttpRequests.post(options, addressAndResources);
@@ -196,35 +201,57 @@ var recursiveReadLine = function () {
 
       let peerAddress;
 
-      parsedFromAPI.body.map((value, index) => {
-        value.resources.map((anotherValue, index) => {
-          if (anotherValue.hash == desiredHash) {
-            //encontrei o arquivo
-            peerAddress = value.ipAddress;
-          }
-        })
-      })
+      console.log('parsed from API: ', parsedFromAPI);
 
-      // if (peerAddress == undefined) {
-      //   console.log('Não encontrei o peer ou o hash informado. :/\n\n');
-      // } else {
-      //   console.log('Encontrei o dono do arquivo! Seu endereço: ', peerAddress);
+      // parsedFromAPI.body.map((value, index) => {
+      //   value.resources.map((anotherValue, index) => {
+      //     console.log('another hash: ', anotherValue.hash);
+      //     console.log('desired hash: ', desiredHash);
+      //     if (anotherValue.hash === desiredHash) {
+      //       //encontrei o arquivo
+      //       peerAddress = value.ipAddress;
+      //       break;
+      //     }
+      //   })
+      // })
+
+      for (let i = 0; i < parsedFromAPI.body.length; i++) {
+        let resources = parsedFromAPI.body[i].resources;
+        for (let j = 0; j < resources.length; j++) {
+          // console.log('resources[j]: ', resources[j]);
+          if (resources[j].hash === desiredHash) {
+            peerAddress = parsedFromAPI.body[i].ip;
+            break;
+          }
+          if (peerAddress) {
+            break;
+          }
+        }
+      }
+
+      if (peerAddress == undefined) {
+        console.log('Não encontrei o peer ou o hash informado. :/\n\n');
+      } else {
+        console.log('Encontrei o dono do arquivo! Seu endereço: ', peerAddress);
+        console.log('Comunicando com ele para obter seu arquivo...');
 
         const requestFile = {
           action: 'i_want_it',
-          hash: '3d01dee3b04ba002b128a419f6fb0f91'
+          hash: desiredHash
         }
 
-        //const addressSplitted = peerAddress.split(':');
+        const addressSplitted = peerAddress.split(':');
 
-        const addressSplitted = '192.168.100.19:8001';
+        // const addressSplitted = '192.168.100.19:8001';
 
-        //Tratar a resposta da API e pedir ao ip retornado + o arquivo que bate com o hash informado
-        server.send(Buffer.from(JSON.stringify(requestFile)), 8001, '192.168.100.19', (error) => {
+        // console.log(addressSplitted);
+        // Tratar a resposta da API e pedir ao ip retornado + o arquivo que bate com o hash informado
+        server.send(Buffer.from(JSON.stringify(requestFile)), parseInt(addressSplitted[1]), addressSplitted[0], (error) => {
           if (error) throw error
+          console.log('error: ', error)
           console.log(`Servidor responde`);
         });
-     // }
+      }
     }
 
     recursiveReadLine();
