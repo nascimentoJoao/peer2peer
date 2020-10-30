@@ -40,7 +40,7 @@ expose(async function beat(peerIp, port) {
             stringToLog = `[${peerIp}]_error_at_${new Date()}_[traz_cloroquina_pro_pai]\n`
         }
 
-        fs.appendFile(`logs/heartbeat/${year}-${month}-${day}.txt`, stringToLog, { flag: 'a+' }, (error) => {
+        fs.appendFile(`${year}-${month}-${day}.txt`, stringToLog, { flag: 'a+' }, (error) => {
             if (error) {
                 console.log('Error happened! ', error);
                 return error;
