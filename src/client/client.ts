@@ -170,7 +170,7 @@ var recursiveReadLine = function () {
     if (answer == 'resources') {
       console.log('Listando todos os seus recursos...');
       const options = {
-        hostname: 'localhost',
+        hostname: process.env.SERVER,
         port: '8080',
         path: '/peers',
         method: 'GET'
@@ -189,7 +189,7 @@ var recursiveReadLine = function () {
       console.log('eu quero o hash: ', desiredHash);
 
       const options = {
-        hostname: 'localhost',
+        hostname: process.env.SERVER,
         port: '8080',
         path: '/peers/',
         method: 'GET'

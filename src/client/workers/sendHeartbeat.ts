@@ -12,7 +12,7 @@ expose(async function beat(peerIp) {
         });
 
         const options = {
-            hostname: 'localhost',
+            hostname: process.env.SERVER,
             port: 8080,
             path: '/peers/ping',
             method: 'PUT',
