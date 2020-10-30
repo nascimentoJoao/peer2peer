@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import readLine from 'readline';
 const { exec } = require("child_process");
 import { createSocket } from 'dgram';

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { expose } from 'threads/worker'
 const HttpRequests = require('../../../http/HttpRequests');
 

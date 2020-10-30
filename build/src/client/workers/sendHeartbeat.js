@@ -36,6 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
 var worker_1 = require("threads/worker");
 var HttpRequests = require('../../../http/HttpRequests');
 worker_1.expose(function beat(peerIp) {

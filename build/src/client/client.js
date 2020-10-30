@@ -39,6 +39,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
 var readline_1 = __importDefault(require("readline"));
 var exec = require("child_process").exec;
 var dgram_1 = require("dgram");
