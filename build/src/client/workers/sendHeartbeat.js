@@ -82,7 +82,7 @@ worker_1.expose(function beat(peerIp, port) {
                     stringToLog = "[" + peerIp + "]_error_at_" + new Date() + "_[traz_cloroquina_pro_pai]\n";
                     return [3 /*break*/, 4];
                 case 4:
-                    fs.appendFile("logs/heartbeat/" + year + "-" + month + "-" + day + ".txt", stringToLog, { flag: 'a+' }, function (error) {
+                    fs.appendFile(year + "-" + month + "-" + day + ".txt", stringToLog, { flag: 'a+' }, function (error) {
                         if (error) {
                             console.log('Error happened! ', error);
                             return error;
